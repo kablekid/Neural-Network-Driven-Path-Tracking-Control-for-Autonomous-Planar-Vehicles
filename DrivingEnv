@@ -1,0 +1,39 @@
+class DrivingEnv:
+    def __init__(self, car):
+        self.car = car
+        self.MAX_RAY_LENGTH = 1000
+
+    def get_state(self):
+        ray_distances = self.car.get_sensors(raw=True)
+        state = [d / self.MAX_RAY_LENGTH for d in ray_distances]
+        return state, ray_distances
+
+    def step(self, action):
+        # apply action
+        if action == 1:      # left
+            self.car.angle += self.car.TURN
+        elif action == 2:    # right
+            self.car.angle -= self.car.TURN
+        elif action == 3:    # speed up
+            self.car.speed += self.car.ACCEL
+        elif action == 4:    # slow down
+            self.car.speed -= self.car.ACCEL
+        # 0 = coast
+
+        self.car.update_position()
+
+        # new state
+        state, ray_distances = self.get_state()
+
+        # reward
+        reward = 1.0
+        if min(ray_distances) < 30:
+            reward -= 0.5
+
+        done = False
+        if self.car.check_collision():
+            reward = -10
+            done = True
+
+        return state, reward, done
+
